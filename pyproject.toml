@@ -1,0 +1,49 @@
+[tool.black]
+line-length = 88
+target-version = ["py39"]
+exclude = '''
+(
+    ^\.git
+    | ^\.hg
+    | ^\.mypy_cache
+    | ^\.tox
+    | ^\.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)
+'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = ["E", "F", "W", "C", "N", "B", "A"]
+ignore = [
+    "E501",  # Line too long (handled by Black)
+    "F401",  # Unused imports
+]
+exclude = [
+    "tests/fixtures/",
+    "build/",
+    "dist/",
+]
+
+[tool.flake8]
+max-line-length = 88
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+]
+ignore = [
+    "E501",  # Длину строки обрабатывает Black
+    "W503",  # Разрешить переносы перед операторами
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+strict = true
+files = ["src", "tests"]
+exclude = "migrations/"
