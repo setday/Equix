@@ -1,6 +1,5 @@
 [tool.black]
 line-length = 88
-target-version = ["py39"]
 exclude = '''
 (
     ^\.git
@@ -17,7 +16,6 @@ exclude = '''
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
 select = ["E", "F", "W", "C", "N", "B", "A"]
 ignore = [
     "E501",  # Line too long (handled by Black)
