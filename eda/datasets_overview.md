@@ -8,6 +8,7 @@
 ### Датасет для графики ([ChartQA](https://huggingface.co/datasets/ahmed-masry/ChartQA)):
 
 - Формат данных:
+
 ![Пример данных из ChartQA](artifacts/ChartQAExample.png)
 
 | imgname | query | label | type | image |
@@ -28,6 +29,8 @@
 
 ### Датасет для таблиц ([PubTable-1M](https://huggingface.co/datasets/bsmock/pubtables-1m)):
 
+- Формат данных:
+
 ![alt text](artifacts/PubTable1MExample.png)
 
 - Информация о данных:
@@ -39,6 +42,8 @@
     - Сам датасет - всего лишь разметка таблиц с экстракцией данных, данные можно алгоритмически обработать и получить датасет `картинка -> табличка в json формате`.
 
 ### Датасет для layout-а ([DocLayNet](https://huggingface.co/datasets/ds4sd/DocLayNet)):
+
+- Формат данных:
 
 ![alt text](artifacts/DocLayNetExample.png)
 
@@ -57,6 +62,8 @@
     - От существенной части датасета (~80%) придется избавиться, ибо данные не подходят для моделей
 
 ### Генератор датасета для RAG-системы ([SciQAG](https://github.com/MasterAI-EAM/SciQAG)):
+
+- Формат данных:
 
 > 'Q': 'Q: What are the key factors that can affect the deformation behaviour of nanocrystalline metals?',
 > 
@@ -79,6 +86,8 @@
     - Я не смог найти других датасетов для данной тематики (есть медицинские, финансовые, но научных нигде нет ={ )
 
 ### Дополнительные данные ([arXiv Dataset](https://www.kaggle.com/datasets/Cornell-University/arxiv) | [NLP and LLM related Arxiv papers](https://www.kaggle.com/datasets/harshsinghal/nlp-and-llm-related-arxiv-papers)):
+
+- Формат данных:
 
 ![alt text](artifacts/NLPAndLLMRelatedArxivPapersExample.png)
 
