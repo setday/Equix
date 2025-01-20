@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from modeling.metrics import text_similarity_score
-from src.tools.text_embedder import global_text_embedder
-from src.tools.text_embedder import TextEmbedder
+from src.tools.models.text_embedder import global_text_embedder
+from src.tools.models.text_embedder import TextEmbedder
 
 
 @pytest.fixture  # type: ignore

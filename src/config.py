@@ -6,7 +6,7 @@ import dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 
 
 class BaseConfig(BaseSettings):  # type: ignore
@@ -40,7 +40,7 @@ class BaseConfig(BaseSettings):  # type: ignore
 
     # deepseek-ai/deepseek-vl2-small will also be tested
     baseline_model: str = Field(
-        default="deepseek-ai/deepseek-vl2-small",
+        default="meta-llama/Llama-3.2-11B-Vision",
         env="BASELINE_MODEL",
     )
 
@@ -50,7 +50,7 @@ class BaseConfig(BaseSettings):  # type: ignore
     )
     # deepseek-ai/deepseek-vl2-tiny will also be tested
     picture_information_extraction_model: str = Field(
-        default="mPLUG/DocOwl1.5",
+        default="mPLUG/mPLUG-Owl3-2B-241014",
         env="PICTURE_INFORMATION_EXTRACTION_MODEL",
     )
     # Qwen/Qwen2.5-1.5B / deepseek-ai/deepseek-llm-7b-chat /

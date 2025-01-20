@@ -7,7 +7,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.pairwise import cosine_similarity
 
-from src.tools.text_embedder import global_text_embedder
+from src.tools.models.text_embedder import global_text_embedder
 
 
 def numeric_similarity_score(
