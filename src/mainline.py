@@ -1,24 +1,85 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from langchain.prompts import PromptTemplate
 from langgraph.graph import StateGraph
+from PIL import Image
 
 from src.base.layout import Layout
+from src.tools.pdf_reader import PDFReader
 
 
 class ChatChainModel:
     def __init__(
         self,
-        layout: Layout,
+        document_path: Path,
+        crop: tuple[int, int, int, int] | None = None,
+        image_mode: bool = False,
     ):
         """
         A chat chain model that uses a layout to generate a conversation.
 
-        :param layout: The layout of the document.
+        :param document_path: The path to the document.
+        :param crop: The crop for the document (for specific regions).
+        :param image_mode: Select the mode of the document.
         """
 
         self.chain = self._build_chain()
-        self.layout = layout
+        self.layout = self._build_document(document_path, crop, image_mode)
+
+    def _build_document(
+        self,
+        document_path: Path,
+        crop: tuple[int, int, int, int] | None = None,
+        image_mode: bool = False,
+    ) -> Layout:
+        """
+        Make layout of the image.
+
+        :param document_path: The input image.
+        :param crop: The crop for the document (for specific regions).
+        :param image_mode: Select the mode of the document.
+        :return: None
+        """
+
+        self.image: Image.Image | None = None
+        if not image_mode:
+            self.image = self._read_document(document_path)
+        else:
+            self.image = self._read_image(document_path)
+
+        if crop is not None and self.image is not None:
+            self.image = self.image.crop(crop)
+
+        return Layout([])
+
+    def _read_document(
+        self,
+        document_path: Path,
+    ) -> Image.Image:
+        """
+        Read the document.
+
+        :param document_path: The path to the document.
+        :return: None
+        """
+
+        self.pdf_reader = PDFReader(document_path)
+        return self.pdf_reader.as_single_image()
+
+    def _read_image(
+        self,
+        document_path: Path,
+    ) -> Image.Image:
+        """
+        Read the image.
+
+        :param document_path: The path to the document.
+        :return: None
+        """
+
+        return Image.open(document_path)
 
     def _build_chain(self) -> StateGraph:
         """
@@ -40,11 +101,12 @@ class ChatChainModel:
 
         return chain
 
-    def generate_conversation(self) -> str:
+    def handle_prompt(self, prompt: str) -> str:
         """
-        Generate a conversation based on the layout.
+        Handle the prompt and return the response.
 
-        :return: The generated conversation.
+        :param prompt: The prompt to handle.
+        :return: The response.
         """
 
         result = self.chain.generate_conversation()

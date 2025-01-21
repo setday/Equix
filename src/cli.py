@@ -6,6 +6,7 @@ from typing import Callable
 import click
 
 from src.baseline import Baseline
+from src.mainline import ChatChainModel
 
 
 def run_chat(prompt_callback: Callable[[str], str]) -> None:
@@ -33,10 +34,10 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     help="Mode of operation.",
 )  # type: ignore
 @click.option(
-    "--pdf",
+    "--document",
     type=click.Path(exists=True),
     required=True,
-    help="Path to the PDF file.",
+    help="Path to the PDF file or image.",
 )  # type: ignore
 @click.option(
     "--baseline",
@@ -50,7 +51,7 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     default=None,
     help="A single prompt mode.",
 )  # type: ignore
-def main(mode: str, pdf: str, baseline: bool, prompt: str | None) -> None:
+def main(mode: str, document: str, baseline: bool, prompt: str | None) -> None:
     """
     Main function for the CLI.
     """
@@ -58,16 +59,21 @@ def main(mode: str, pdf: str, baseline: bool, prompt: str | None) -> None:
     if not baseline:
         raise NotImplementedError("Baseline chatbot is not implemented yet.")
 
-    if mode == "image":
-        raise NotImplementedError("Image mode is not implemented yet.")
+    is_image_mode = mode == "image"
+
+    path = Path(document)
+
+    model_pipeline = None
+    if baseline:
+        model_pipeline = Baseline(path, image_mode=is_image_mode)
+    else:
+        model_pipeline = ChatChainModel(path, image_mode=is_image_mode)
 
     if prompt is not None:
-        raise NotImplementedError("Single prompt mode is not implemented yet.")
-
-    path = Path(pdf)
-
-    baseline_model = Baseline(path)
-    run_chat(baseline_model.handle_prompt)
+        response = model_pipeline.handle_prompt(prompt)
+        print(f"Bot: {response}")
+    else:
+        run_chat(model_pipeline.handle_prompt)
 
 
 if __name__ == "__main__":
