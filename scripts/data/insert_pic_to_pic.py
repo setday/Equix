@@ -9,9 +9,9 @@ from src.config import config
 
 
 def insert_pic_to_pic(
-    background_pic: Image,
-    foreground_pic: Image,
-) -> Image:
+    background_pic: Image.Image,
+    foreground_pic: Image.Image,
+) -> Image.Image:
     """
     Insert the foreground_pic into the background_pic.
 

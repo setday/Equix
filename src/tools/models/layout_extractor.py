@@ -35,7 +35,7 @@ class LayoutExtractor:
 
     def make_layout(
         self,
-        image: Image,
+        image: Image.Image,
     ) -> list[Any]:
         """
         Make layout of the image.

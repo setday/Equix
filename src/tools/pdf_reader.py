@@ -41,6 +41,28 @@ class PDFReader:
                 images.append(image)
         return images
 
+    def as_single_image(self) -> Image.Image:
+        """
+        Convert the images to a single image.
+
+        :return: A single image.
+        """
+
+        images = self.images
+        widths, heights = zip(*(i.size for i in images))
+
+        total_width = sum(widths)
+        max_height = max(heights)
+
+        new_image = Image.new("RGB", (total_width, max_height))
+
+        x_offset = 0
+        for image in images:
+            new_image.paste(image, (x_offset, 0))
+            x_offset += image.size[0]
+
+        return new_image
+
     def save_images(self, output_dir: Path) -> None:
         """
         Save the images to the output_dir.

@@ -36,7 +36,7 @@ class PictureExtractor:
 
     def ask_for(
         self,
-        image: Image,
+        image: Image.Image,
         prompt: str,
     ) -> str:
         """
