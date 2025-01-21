@@ -51,23 +51,39 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     default=None,
     help="A single prompt mode.",
 )  # type: ignore
-def main(mode: str, document: str, baseline: bool, prompt: str | None) -> None:
+@click.option(
+    "--crop",
+    type=(int, int, int, int),
+    default=None,
+    help="Crop the image.",
+)  # type: ignore
+def main(
+    mode: str,
+    document: str,
+    baseline: bool,
+    prompt: str | None,
+    crop: tuple[int, int, int, int] | None,
+) -> None:
     """
     Main function for the CLI.
-    """
 
-    if not baseline:
-        raise NotImplementedError("Baseline chatbot is not implemented yet.")
+    :param mode: The mode of operation.
+    :param document: The document to process.
+    :param baseline: The baseline flag.
+    :param prompt: The prompt for the chatbot.
+    :param crop: The crop for the image.
+    :return: None
+    """
 
     is_image_mode = mode == "image"
 
     path = Path(document)
 
-    model_pipeline = None
+    model_pipeline: Baseline | ChatChainModel | None = None
     if baseline:
-        model_pipeline = Baseline(path, image_mode=is_image_mode)
+        model_pipeline = Baseline(path, image_mode=is_image_mode, crop=crop)
     else:
-        model_pipeline = ChatChainModel(path, image_mode=is_image_mode)
+        model_pipeline = ChatChainModel(path, image_mode=is_image_mode, crop=crop)
 
     if prompt is not None:
         response = model_pipeline.handle_prompt(prompt)
