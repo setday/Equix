@@ -1,13 +1,24 @@
 from __future__ import annotations
 
+import operator
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Annotated
+from typing import TypedDict
 
 from langchain.prompts import PromptTemplate
+from langchain_core.messages import (
+    BaseMessage,
+)
 from langgraph.graph import StateGraph
 from PIL import Image
 
 from src.base.layout import Layout
 from src.tools.pdf_reader import PDFReader
+
+
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[BaseMessage], operator.setitem]
 
 
 class ChatChainModel:
@@ -88,7 +99,7 @@ class ChatChainModel:
         :return: The chain for the chat model.
         """
 
-        chain = StateGraph()
+        chain = StateGraph(AgentState)
 
         chain.add_state("start")
         chain.add_state("end")
@@ -111,7 +122,10 @@ class ChatChainModel:
 
         result = self.chain.generate_conversation()
 
-        assert isinstance(result, str)
+        assert isinstance(
+            result,
+            str,
+        ), "Something went wrong with the conversation: chain returned a non-string result."
 
         return result
 
@@ -159,6 +173,9 @@ class ExtractionChainModel:
 
         result = self.chain.generate_conversation()
 
-        assert isinstance(result, str)
+        assert isinstance(
+            result,
+            str,
+        ), "Something went wrong with the conversation: chain returned a non-string result."
 
         return result

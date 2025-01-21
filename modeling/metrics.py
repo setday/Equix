@@ -25,7 +25,10 @@ def numeric_similarity_score(
 
     result = r2_score(y_true, y_pred, force_finite=True)
 
-    assert isinstance(result, float)
+    assert isinstance(
+        result,
+        float,
+    ), f"Expected float, got {type(result)} in numeric_similarity_score function."
 
     return result
 
@@ -45,7 +48,10 @@ def exact_similarity_score(
 
     result = f1_score(y_true, y_pred, average="micro")
 
-    assert isinstance(result, float)
+    assert isinstance(
+        result,
+        float,
+    ), f"Expected float, got {type(result)} in exact_similarity_score function."
 
     return result
 
@@ -62,7 +68,9 @@ def _iou_score(
     :return: The IoU score.
     """
 
-    assert len(box_a) == 4 and len(box_b) == 4
+    assert (
+        len(box_a) == 4 and len(box_b) == 4
+    ), f"Bounding boxes must have 4 elements to find iou, got {len(box_a)} and {len(box_b)}."
 
     area_a = (box_a[2] - box_a[0]) * (box_a[3] - box_a[1])
     area_b = (box_b[2] - box_b[0]) * (box_b[3] - box_b[1])
@@ -140,7 +148,10 @@ def _embeddings_similarity_score(
     result = cosine_similarity([y_true], [y_pred])[0][0]
     result = max(-1.0, min(1.0, result))
 
-    assert isinstance(result, float)
+    assert isinstance(
+        result,
+        float,
+    ), f"Expected float, got {type(result)} in _embeddings_similarity_score function."
 
     return result
 
@@ -178,7 +189,10 @@ def text_similarity_score(
     :return: The similarity score.
     """
 
-    assert len(y_true) == len(y_pred)
+    assert len(y_true) == len(y_pred), (
+        "Expected equal length of y_true and y_pred, "
+        f"got {len(y_true)} and {len(y_pred)}."
+    )
 
     similarity_score_generator = (
         _text_similarity_score(true_text, pred_text)

@@ -5,9 +5,6 @@ from typing import Callable
 
 import click
 
-from src.baseline import Baseline
-from src.mainline import ChatChainModel
-
 
 def run_chat(prompt_callback: Callable[[str], str]) -> None:
     """
@@ -78,11 +75,18 @@ def main(
     is_image_mode = mode == "image"
 
     path = Path(document)
+    assert path.exists(), f"Document path {path} does not exist."
+
+    print(baseline)
 
     model_pipeline: Baseline | ChatChainModel | None = None
     if baseline:
+        from src.baseline import Baseline
+
         model_pipeline = Baseline(path, image_mode=is_image_mode, crop=crop)
     else:
+        from src.mainline import ChatChainModel
+
         model_pipeline = ChatChainModel(path, image_mode=is_image_mode, crop=crop)
 
     if prompt is not None:

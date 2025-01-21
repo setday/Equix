@@ -26,8 +26,15 @@ class PictureExtractor:
         :param processor_path: The path to the processor.
         """
 
-        assert model_path.exists()
-        assert processor_path.exists()
+        assert model_path.exists(), (
+            f"Model path {model_path} does not exist. "
+            "Please download the model using `scripts/models/load_models`."
+        )
+        assert processor_path.exists(), (
+            f"Processor path {processor_path} does not exist. "
+            "Remove the model folder `models/picture_information_extraction_model` "
+            "and download the model again using `scripts/models/load_models`."
+        )
 
         self.model = AutoModel.from_pretrained(model_path).eval()
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
