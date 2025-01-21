@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 
 import pdf2image
@@ -60,3 +61,9 @@ class PDFReader:
 
     def __len__(self) -> int:
         return len(self.images)
+
+    def __getitem__(self, index: int) -> Image.Image:
+        return self.images[index]
+
+    def __iter__(self) -> Iterator[Image.Image]:
+        return iter(self.images)

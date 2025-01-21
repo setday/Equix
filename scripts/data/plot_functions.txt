@@ -1,0 +1,3 @@
+np.sin({val})
+np.cos({val})
+np.pow({val}, 2)

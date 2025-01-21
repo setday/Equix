@@ -111,6 +111,67 @@ def dowload_doclaynet_datasets(
     dataset.save_to_disk(output_dir)
 
 
+def download_papers(
+    output_dir: Path = config.data_dir / "papers",
+) -> None:
+    """
+    Download papers from the internet and save them to the output_dir.
+
+    :param output_dir: The directory where the papers are saved.
+    :return: None
+    """
+
+    logger.info(
+        f"Downloading papers... (data will be saved to {output_dir})",
+    )
+
+    # Check if the papers are already downloaded
+    if output_dir.exists():
+        logger.warning(
+            f"Found possible existing papers at {output_dir}. Skipping download.",
+        )
+        return
+
+    # Create the output_dir if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Download the papers
+    os.system(
+        f"cd {output_dir} && curl -LO"
+        "curl -LO https://www.kaggle.com/api/v1/datasets/download/Cornell-University/arxiv",
+    )
+
+
+def download_sciqag_generator(
+    output_dir: Path = config.data_dir / "sciqag_generator",
+) -> None:
+    """
+    Download the `sciqag_generator` model from the internet and save it to the output_dir.
+
+    :param output_dir: The directory where the model is saved.
+    :return: None
+    """
+
+    logger.info(
+        f"Downloading the `sciqag_generator` model... (data will be saved to {output_dir})",
+    )
+
+    # Check if the model is already downloaded
+    if output_dir.exists():
+        logger.warning(
+            f"Found possible existing model at {output_dir}. Skipping download.",
+        )
+        return
+
+    # Create the output_dir if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Download the `sciqag_generator` model
+    os.system(
+        f"cd {output_dir} && git clone" "https://github.com/MasterAI-EAM/SciQAG.git",
+    )
+
+
 def download_datasets(
     output_dir: Path = config.data_dir,
 ) -> None:
@@ -133,6 +194,12 @@ def download_datasets(
 
     # Download the `doclaynet` datasets
     dowload_doclaynet_datasets(output_dir / "layoutset")
+
+    # Download the papers
+    download_papers(output_dir / "papers")
+
+    # Download the `sciqag_generator` model
+    download_sciqag_generator(output_dir / "sciqag_generator")
 
 
 if __name__ == "__main__":
