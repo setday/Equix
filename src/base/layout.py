@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
+
+from PIL import Image
 
 
 class LayoutBlockType(Enum):
@@ -26,6 +29,39 @@ class LayoutBlockSpecification(Enum):
     ANNOTATION = 3
     CAPTION = 4
     PAGE_NUMBER = 5
+
+
+def block_string_to_enum(
+    block_string: str,
+) -> tuple[LayoutBlockType, LayoutBlockSpecification]:
+    """
+    Convert the block string to a block enum.
+
+    :param block_string: The block string.
+    :return: The block enum.
+    """
+
+    match block_string:
+        case "Table":
+            return LayoutBlockType.TABLE, LayoutBlockSpecification.UNKNOWN
+        case "Picture":
+            return LayoutBlockType.IMAGE, LayoutBlockSpecification.UNKNOWN
+        case "Text":
+            return LayoutBlockType.TEXT, LayoutBlockSpecification.UNKNOWN
+        case "Chart":
+            return LayoutBlockType.CHART, LayoutBlockSpecification.UNKNOWN
+        case "Header":
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.HEADER
+        case "Footer":
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.FOOTER
+        case "Annotation":
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.ANNOTATION
+        case "Caption":
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.CAPTION
+        case "Page Number":
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.PAGE_NUMBER
+        case _:
+            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.UNKNOWN
 
 
 class LayoutBlock:
@@ -73,6 +109,51 @@ class LayoutBlock:
 
         self.anotation = anotation
 
+    @staticmethod
+    def from_dict(
+        block_data: dict[str, Any],
+    ) -> LayoutBlock:
+        """
+        A layout block class that represents a block in a document layout.
+
+        :param block_data: The data of the block.
+        :return: The layout block.
+        """
+
+        btype = block_data.get("block_type", None)
+
+        if isinstance(btype, str):
+            block_type, block_specification = block_string_to_enum(btype)
+        else:
+            block_type = LayoutBlockType[block_data["block_type"]]
+            block_specification = LayoutBlockSpecification[
+                block_data.get("block_specification", 0)
+            ]
+
+        return LayoutBlock(
+            block_type=block_type,
+            block_specification=block_specification,
+            bbox=block_data.get("bbox", None),
+            page_number=block_data.get("page_number", None),
+            text_content=block_data.get("text_content", None),
+            byte_content=block_data.get("byte_content", None),
+            anotation=block_data.get("anotation", None),
+        )
+
+    def extract_image_block(self, pages: list[Image.Image]) -> Image.Image:
+        """
+        Extract the image block from the pages.
+
+        :param pages: The pages of the document.
+        :return: The image block.
+        """
+
+        x0, y0, x1, y1 = self.bbox
+        page = pages[self.page_number]
+        image_block = page.crop((x0, y0, x1, y1))
+
+        return image_block
+
     def to_text(self) -> str:
         """
         Convert the layout block to text.
@@ -87,6 +168,23 @@ class LayoutBlock:
             return self.anotation
 
         return f"LayoutBlock(block_type={self.block_type}, block_specification={self.block_specification})"
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert the layout block to a dictionary.
+
+        :return: The dictionary representation of the layout block.
+        """
+
+        return {
+            "block_type": self.block_type.name,
+            "block_specification": self.block_specification.name,
+            "bbox": self.bbox,
+            "page_number": self.page_number,
+            "text_content": self.text_content,
+            "byte_content": self.byte_content,
+            "anotation": self.anotation,
+        }
 
     def __repr__(self) -> str:
         return self.to_text()
@@ -110,6 +208,24 @@ class Layout:
 
         self.blocks = blocks
 
+    @staticmethod
+    def from_dict(
+        layout_data: dict[str, list[dict[str, Any]]],
+    ) -> Layout:
+        """
+        A layout class that represents a layout of a document.
+
+        :param layout_data: The data of the layout.
+        :return: The layout.
+        """
+
+        return Layout(
+            blocks=[
+                LayoutBlock.from_dict(block_data)
+                for block_data in layout_data["blocks"]
+            ],
+        )
+
     def to_text(self) -> str:
         """
         Convert the layout to text.
@@ -118,6 +234,33 @@ class Layout:
         """
 
         return "\n".join([str(block) for block in self.blocks])
+
+    def to_dict(self, graphics_only: bool = False) -> dict[str, Any]:
+        """
+        Convert the layout to a dictionary.
+
+        :param graphics_only: A flag to include only graphics in the layout.
+        :return: The dictionary representation of the layout.
+        """
+
+        return {
+            "blocks": [
+                block.to_dict().update({"index": index})
+                for index, block in enumerate(self.blocks)
+                if not graphics_only
+                or (
+                    block.block_type == LayoutBlockType.IMAGE
+                    or block.block_type == LayoutBlockType.TABLE
+                    or block.block_type == LayoutBlockType.CHART
+                )
+            ],
+        }
+
+    def __len__(self) -> int:
+        return len(self.blocks)
+
+    def __getitem__(self, index: int) -> LayoutBlock:
+        return self.blocks[index]
 
     def __repr__(self) -> str:
         return self.to_text()

@@ -7,13 +7,12 @@ from typing import Annotated
 from typing import TypedDict
 
 from langchain.prompts import PromptTemplate
-from langchain_core.messages import (
-    BaseMessage,
-)
+from langchain_core.messages import BaseMessage
 from langgraph.graph import StateGraph
 from PIL import Image
 
 from src.base.layout import Layout
+from src.tools.models.layout_extractor import global_layout_extractor
 from src.tools.pdf_reader import PDFReader
 
 
@@ -25,7 +24,7 @@ class ChatChainModel:
     def __init__(
         self,
         document_path: Path,
-        crop: tuple[int, int, int, int] | None = None,
+        crop: tuple[int, int, int, int, int] | None = None,
         image_mode: bool = False,
     ):
         """
@@ -42,7 +41,7 @@ class ChatChainModel:
     def _build_document(
         self,
         document_path: Path,
-        crop: tuple[int, int, int, int] | None = None,
+        crop: tuple[int, int, int, int, int] | None = None,
         image_mode: bool = False,
     ) -> Layout:
         """
@@ -54,21 +53,30 @@ class ChatChainModel:
         :return: None
         """
 
-        self.image: Image.Image | None = None
+        self.images: list[Image.Image] | None = None
         if not image_mode:
-            self.image = self._read_document(document_path)
+            self.images = self._read_document(document_path)
         else:
-            self.image = self._read_image(document_path)
+            self.images = [self._read_image(document_path)]
 
-        if crop is not None and self.image is not None:
-            self.image = self.image.crop(crop)
+        if crop is not None and self.images is not None:
+            self.images = [self.images[crop[0]].crop(crop[1:])]
 
-        return Layout([])
+        layout = Layout.from_dict(
+            {
+                "blocks": [
+                    box.update({"page_number": page_number}) or box
+                    for page_number, image in enumerate(self.images)
+                    for box in global_layout_extractor.make_layout(image)
+                ],
+            },
+        )
+        return layout
 
     def _read_document(
         self,
         document_path: Path,
-    ) -> Image.Image:
+    ) -> list[Image.Image]:
         """
         Read the document.
 
@@ -77,7 +85,7 @@ class ChatChainModel:
         """
 
         self.pdf_reader = PDFReader(document_path)
-        return self.pdf_reader.as_single_image()
+        return self.pdf_reader.images
 
     def _read_image(
         self,
@@ -111,6 +119,15 @@ class ChatChainModel:
         )
 
         return chain
+
+    def get_layout(self) -> Layout:
+        """
+        Get the layout of the document.
+
+        :return: The layout of the document.
+        """
+
+        return self.layout
 
     def handle_prompt(self, prompt: str) -> str:
         """

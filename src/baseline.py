@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
+from src.base.layout import Layout
 from src.tools.models.vllm_model import global_vllm_model
 from src.tools.pdf_reader import PDFReader
 
@@ -12,7 +13,7 @@ class Baseline:
     def __init__(
         self,
         document_path: Path,
-        crop: tuple[int, int, int, int] | None = None,
+        crop: tuple[int, int, int, int, int] | None = None,
         image_mode: bool = False,
     ):
         """
@@ -33,7 +34,7 @@ class Baseline:
             self._read_image()
 
         if crop is not None and self.image is not None:
-            self.image = self.image.crop(crop)
+            self.image = self.image.crop(crop[1:])
 
     def _read_document(self) -> None:
         """
@@ -53,6 +54,15 @@ class Baseline:
         """
 
         self.image = Image.open(self.document_path)
+
+    def get_layout(self) -> Layout:
+        """
+        Get the layout.
+
+        :return: The layout.
+        """
+
+        raise NotImplementedError
 
     def handle_prompt(self, prompt: str) -> str:
         """
