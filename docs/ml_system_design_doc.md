@@ -360,8 +360,60 @@ _В ходе разработки основной модели архитект
 ---
 
 ### 4. Внедрение для production систем
+![api_architecture](artifacts/APIArchitecture.png)
+_(архитектура взаимодействия пользователя с системой)_
 
-#### 4.1. Архитектура решения
+Схему API можно описать следующим образом:
+
+```
+> Layout extraction
+
+->
+{
+    token: [in case of external server use],
+    document: <binary pdf document>
+}
+
+<-
+{
+    layout: <JSON-document / image blocks only>
+}
+
+====
+
+> Graphics extraction
+
+->
+{
+    token: [in case of external server use],
+    layout_block_id: <Int>
+}
+
+<-
+{
+    status: <Indicate if session is valid>,
+    text: <Extraction result / can be in form of code or md>
+}
+
+====
+
+> Information extraction
+
+->
+{
+    token: [in case of external server use],
+    prompt: <Text of the question>
+}
+
+<-
+{
+    status: <Indicate if session is valid>,
+    answer: <Information extraction result>
+}
+
+```
+
+_Запросы могут быть уточнены или изменены в зависимости и направления развития (например, внедрения экстракции информации по шаблону)_
 
 #### 4.2. Описание инфраструктуры и масштабируемости
 
