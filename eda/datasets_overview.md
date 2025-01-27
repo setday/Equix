@@ -66,15 +66,15 @@
 - Формат данных:
 
 > 'Q': 'Q: What are the key factors that can affect the deformation behaviour of nanocrystalline metals?',
-> 
+>
 > 'A': 'A: The key factors that can affect the deformation behaviour of nanocrystalline metals include the grain size, the grain-boundary-based deformation mechanism, the elastic constants, the plastic deformation rate, and the initial stress.',
-> 
+>
 > 'Q': 'Q: How does the grain size affect the deformation behaviour of nanocrystalline metals?',
 >
 >  'A': 'A: As the grain size becomes smaller, the strength of the grain boundaries becomes larger, leading to a decrease in the deformation rate. Additionally, the presence of dislocations is affected by the grain size, with more dislocations observed in larger grains.',
 >
 > 'Q': 'Q: What is the main advantage of using molecular-dynamics simulation in studying the deformation behaviour of nanocrystalline metals?',
-> 
+>
 >  'A': 'A: The main advantage of using molecular-dynamics simulation in studying the deformation behaviour of nanocrystalline metals is that it allows for the investigation of the internal structure and dynamics of the nucleated dislocations at the atomic level. This is in contrast to experimental techniques, which can only provide macroscopic observations.',
 
 - Информация о данных:
