@@ -43,7 +43,7 @@ class LayoutExtractor:
     def make_layout(
         self,
         image: Image.Image,
-    ) -> list[Any]:
+    ) -> list[dict[str, Any]]:
         """
         Make layout of the image.
 
@@ -60,9 +60,24 @@ class LayoutExtractor:
             target_sizes=[image.size[::-1]],
         )
 
-        assert isinstance(bboxes, list), f"Expected list of bboxes, got {type(bboxes)}"
+        result = []
 
-        return bboxes
+        for score, label, box in zip(
+            bboxes["scores"],
+            bboxes["labels"],
+            bboxes["boxes"],
+        ):
+            if score < self.detection_threshold:
+                continue
+
+            result.append(
+                {
+                    "block_type": label,
+                    "bbox": box,
+                },
+            )
+
+        return result
 
 
 # Create a global layout extractor based on a default model

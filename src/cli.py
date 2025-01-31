@@ -15,19 +15,19 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     """
 
     while True:
-        prompt = input("You: ")
+        prompt = input()
         if prompt == "exit":
             break
 
         response = prompt_callback(prompt)
-        print(f"Bot: {response}")
+        print(response)
 
 
 @click.command()  # type: ignore
 @click.option(
-    "--mode",
-    type=click.Choice(["chat", "image"]),
-    default="chat",
+    "--document_mode",
+    type=click.Choice(["pdf", "image"]),
+    default="pdf",
     help="Mode of operation.",
 )  # type: ignore
 @click.option(
@@ -43,6 +43,12 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     help="Run the baseline chatbot.",
 )  # type: ignore
 @click.option(
+    "--extract_layout",
+    is_flag=True,
+    default=False,
+    help="Run the layout chatbot.",
+)  # type: ignore
+@click.option(
     "--prompt",
     type=str,
     default=None,
@@ -50,7 +56,7 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
 )  # type: ignore
 @click.option(
     "--crop",
-    type=(int, int, int, int),
+    type=(int, int, int, int, int),
     default=None,
     help="Crop the image.",
 )  # type: ignore
@@ -58,8 +64,9 @@ def main(
     mode: str,
     document: str,
     baseline: bool,
+    extract_layout: bool,
     prompt: str | None,
-    crop: tuple[int, int, int, int] | None,
+    crop: tuple[int, int, int, int, int] | None,
 ) -> None:
     """
     Main function for the CLI.
@@ -68,9 +75,13 @@ def main(
     :param document: The document to process.
     :param baseline: The baseline flag.
     :param prompt: The prompt for the chatbot.
-    :param crop: The crop for the image.
+    :param crop: The crop for the image ([page_number, x0, y0, x1, y1]).
     :return: None
     """
+
+    assert not (
+        baseline and extract_layout
+    ), "There is no layout block in the baseline."
 
     is_image_mode = mode == "image"
 
@@ -89,9 +100,15 @@ def main(
 
         model_pipeline = ChatChainModel(path, image_mode=is_image_mode, crop=crop)
 
+    if extract_layout:
+        layout = model_pipeline.get_layout()
+        dict_layout = layout.to_dict(graphics_only=True)
+        print(dict_layout)
+        return
+
     if prompt is not None:
         response = model_pipeline.handle_prompt(prompt)
-        print(f"Bot: {response}")
+        print(response)
     else:
         run_chat(model_pipeline.handle_prompt)
 
