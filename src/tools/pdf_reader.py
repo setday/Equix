@@ -34,11 +34,7 @@ class PDFReader:
         :return: A list of images.
         """
 
-        images = []
-        with pdf2image.create(self.pdf_path) as pdf:
-            for _i, page in enumerate(pdf.pages):
-                image = page.to_pil()
-                images.append(image)
+        images = pdf2image.convert_from_path(self.pdf_path)        
         return images
 
     def as_single_image(self) -> Image.Image:

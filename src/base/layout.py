@@ -12,10 +12,24 @@ class LayoutBlockType(Enum):
     """
 
     UNKNOWN = 0
-    TEXT = 1
-    IMAGE = 2
-    TABLE = 3
-    CHART = 4
+
+    CAPTION = 1
+    FOOTNOTE = 2
+    FORMULA = 3
+
+    LIST_ITEM = 4
+
+    PAGE_FOOTER = 5
+    PAGE_HEADER = 6
+
+    PICTURE = 7
+
+    SECTION_HEADER = 8
+
+    TABLE = 9
+    TEXT = 10
+    
+    CHART = 100
 
 
 class LayoutBlockSpecification(Enum):
@@ -125,10 +139,10 @@ class LayoutBlock:
         if isinstance(btype, str):
             block_type, block_specification = block_string_to_enum(btype)
         else:
-            block_type = LayoutBlockType[block_data["block_type"]]
-            block_specification = LayoutBlockSpecification[
+            block_type = LayoutBlockType(block_data["block_type"])
+            block_specification = LayoutBlockSpecification(
                 block_data.get("block_specification", 0)
-            ]
+            )
 
         return LayoutBlock(
             block_type=block_type,
@@ -245,11 +259,11 @@ class Layout:
 
         return {
             "blocks": [
-                block.to_dict().update({"index": index})
+                block.to_dict()#.update({"index": index})
                 for index, block in enumerate(self.blocks)
                 if not graphics_only
                 or (
-                    block.block_type == LayoutBlockType.IMAGE
+                    block.block_type == LayoutBlockType.PICTURE
                     or block.block_type == LayoutBlockType.TABLE
                     or block.block_type == LayoutBlockType.CHART
                 )

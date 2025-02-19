@@ -8,16 +8,55 @@ from typing import TypedDict
 
 from langchain.prompts import PromptTemplate
 from langchain_core.messages import BaseMessage
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, START, END
+from langgraph.graph.message import add_messages
 from PIL import Image
 
 from src.base.layout import Layout
+from src.tools.models.llm_model import global_llm_model
 from src.tools.models.layout_extractor import global_layout_extractor
 from src.tools.pdf_reader import PDFReader
 
 
 class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], operator.setitem]
+    messages: Annotated[list, add_messages]
+
+
+class QuestionResolverNode:
+    def __init__(self, layout: Layout, model: any) -> None:
+        """
+        A question resolver node that resolves the question based on the layout.
+
+        :param question: The question to resolve.
+        :param layout: The layout of the document.
+        """
+
+        self.layout = layout
+        self.model = model
+
+    def resolve(self, state: AgentState) -> AgentState:
+        """
+        Resolve the question based on the layout.
+
+        :return: The resolved question.
+        """
+        
+        question = state["messages"][-1]["content"]
+        resolved_question = self.model.ask_for(question, layout=self.layout)
+        state["messages"].append(
+            {"role": "assistant", "content": resolved_question},
+        )
+        return state
+    
+    def __call__(self, state: AgentState) -> AgentState:
+        """
+        Call the question resolver node.
+
+        :param state: The agent state.
+        :return: The agent state.
+        """
+        
+        return self.resolve(state)
 
 
 class ChatChainModel:
@@ -35,8 +74,8 @@ class ChatChainModel:
         :param image_mode: Select the mode of the document.
         """
 
-        self.chain = self._build_chain()
         self.layout = self._build_document(document_path, crop, image_mode)
+        self.chain = self._build_chain()
 
     def _build_document(
         self,
@@ -109,14 +148,10 @@ class ChatChainModel:
 
         chain = StateGraph(AgentState)
 
-        chain.add_state("start")
-        chain.add_state("end")
-
-        chain.add_edge(
-            "start",
-            "end",
-            PromptTemplate("Ask for information about document", layout=self.layout),
-        )
+        chain.add_node("entry_node", QuestionResolverNode(self.layout, global_llm_model))
+        
+        chain.add_edge(START, "entry_node")
+        chain.add_edge("entry_node", END)
 
         return chain
 

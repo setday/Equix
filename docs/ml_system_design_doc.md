@@ -1,5 +1,5 @@
 # ML System Design Doc <!-- omit from toc -->
-## Дизайн ML системы - ScientificPaper-IR v1.0.0 <!-- omit from toc -->
+## Дизайн ML системы - Equix v1.0.0 <!-- omit from toc -->
 
 <!-- TOC -->
 - [0. Термины](#0-термины)
@@ -182,9 +182,9 @@
 | SciQAG  | Генератор Q&A для документов о их содержании  | Использует Llama 2 для генерации вопросов и ответов к тексту | [link](https://github.com/MasterAI-EAM/SciQAG) |
 | arXiv Dataset  | Научные статьи   | Датасет состоит из статей arXiv разного научного содержания / из разметки есть только Abstract и авторы | [link](https://www.kaggle.com/datasets/Cornell-University/arxiv) |
 | NLP and LLM related Arxiv papers  | Научные статьи   | Датасет состоит из статей о NLP и LLM / не содержит никакой разметки | [link](https://www.kaggle.com/datasets/harshsinghal/nlp-and-llm-related-arxiv-papers) |
-| ScientificPaper-IR  | Научные статьи   | Данные, предоставленные компанией с разметкой и реальными Q&A | no link |
+| Equix  | Научные статьи   | Данные, предоставленные компанией с разметкой и реальными Q&A | no link |
 
-ScientificPaper-IR (датасет внутренних документов компании):
+Equix (датасет внутренних документов компании):
 - Датасет расширяется весьма небыстро (~1-2 документа в месяц).
 - Данные вносятся путем размещения этих документов в специальном директории на серверах компании.
 - Данные поступают от отдела по исследованию в областях, связанных с math and compuer science.

@@ -26,8 +26,8 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
 @click.command()  # type: ignore
 @click.option(
     "--document_mode",
-    type=click.Choice(["pdf", "image"]),
-    default="pdf",
+    type=click.Choice(["document", "image"]),
+    default="document",
     help="Mode of operation.",
 )  # type: ignore
 @click.option(
@@ -61,7 +61,7 @@ def run_chat(prompt_callback: Callable[[str], str]) -> None:
     help="Crop the image.",
 )  # type: ignore
 def main(
-    mode: str,
+    document_mode: str,
     document: str,
     baseline: bool,
     extract_layout: bool,
@@ -83,12 +83,9 @@ def main(
         baseline and extract_layout
     ), "There is no layout block in the baseline."
 
-    is_image_mode = mode == "image"
+    is_image_mode = document_mode == "image"
 
     path = Path(document)
-    assert path.exists(), f"Document path {path} does not exist."
-
-    print(baseline)
 
     model_pipeline: Baseline | ChatChainModel | None = None
     if baseline:
