@@ -1,29 +1,29 @@
 from __future__ import annotations
 
-import operator
-from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated
+from typing import Any
 from typing import TypedDict
 
 from langchain.prompts import PromptTemplate
-from langchain_core.messages import BaseMessage
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END
+from langgraph.graph import START
+from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 from PIL import Image
 
 from src.base.layout import Layout
-from src.tools.models.llm_model import global_llm_model
 from src.tools.models.layout_extractor import global_layout_extractor
+from src.tools.models.llm_model import global_llm_model
 from src.tools.pdf_reader import PDFReader
 
 
 class AgentState(TypedDict):
-    messages: Annotated[list, add_messages]
+    messages: Annotated[list[Any], add_messages]
 
 
 class QuestionResolverNode:
-    def __init__(self, layout: Layout, model: any) -> None:
+    def __init__(self, layout: Layout, model: Any) -> None:
         """
         A question resolver node that resolves the question based on the layout.
 
@@ -40,14 +40,14 @@ class QuestionResolverNode:
 
         :return: The resolved question.
         """
-        
+
         question = state["messages"][-1]["content"]
         resolved_question = self.model.ask_for(question, layout=self.layout)
         state["messages"].append(
             {"role": "assistant", "content": resolved_question},
         )
         return state
-    
+
     def __call__(self, state: AgentState) -> AgentState:
         """
         Call the question resolver node.
@@ -55,7 +55,7 @@ class QuestionResolverNode:
         :param state: The agent state.
         :return: The agent state.
         """
-        
+
         return self.resolve(state)
 
 
@@ -148,8 +148,11 @@ class ChatChainModel:
 
         chain = StateGraph(AgentState)
 
-        chain.add_node("entry_node", QuestionResolverNode(self.layout, global_llm_model))
-        
+        chain.add_node(
+            "entry_node",
+            QuestionResolverNode(self.layout, global_llm_model),
+        )
+
         chain.add_edge(START, "entry_node")
         chain.add_edge("entry_node", END)
 

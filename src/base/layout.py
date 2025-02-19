@@ -28,7 +28,7 @@ class LayoutBlockType(Enum):
 
     TABLE = 9
     TEXT = 10
-    
+
     CHART = 100
 
 
@@ -59,7 +59,7 @@ def block_string_to_enum(
         case "Table":
             return LayoutBlockType.TABLE, LayoutBlockSpecification.UNKNOWN
         case "Picture":
-            return LayoutBlockType.IMAGE, LayoutBlockSpecification.UNKNOWN
+            return LayoutBlockType.PICTURE, LayoutBlockSpecification.UNKNOWN
         case "Text":
             return LayoutBlockType.TEXT, LayoutBlockSpecification.UNKNOWN
         case "Chart":
@@ -141,7 +141,7 @@ class LayoutBlock:
         else:
             block_type = LayoutBlockType(block_data["block_type"])
             block_specification = LayoutBlockSpecification(
-                block_data.get("block_specification", 0)
+                block_data.get("block_specification", 0),
             )
 
         return LayoutBlock(
@@ -259,7 +259,7 @@ class Layout:
 
         return {
             "blocks": [
-                block.to_dict()#.update({"index": index})
+                block.to_dict()  # .update({"index": index})
                 for index, block in enumerate(self.blocks)
                 if not graphics_only
                 or (

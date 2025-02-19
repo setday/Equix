@@ -34,8 +34,7 @@ class PDFReader:
         :return: A list of images.
         """
 
-        images = pdf2image.convert_from_path(self.pdf_path)        
-        return images
+        return pdf2image.convert_from_path(self.pdf_path)  # type: ignore
 
     def as_single_image(self) -> Image.Image:
         """
