@@ -1,0 +1,17 @@
+services:
+  markup:
+    container_name: markup
+    build:
+      context: .
+      dockerfile: services/markup/Dockerfile
+    command: "python app.py"
+    volumes:
+      - ./src:/app/src # Mount sources to container
+      - ./models:/app/models # Mount models to container
+    ports:
+      - "5123:5123"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5123/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

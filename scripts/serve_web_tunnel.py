@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pickle
+
 import json
 import subprocess
 import tempfile
@@ -37,18 +39,24 @@ def run_cli_command(command: list[str]) -> str:
     if result.returncode != 0:
         raise HTTPException(status_code=500, detail=result.stderr)
     return result.stdout
+    # return "{'blocks': []}"
 
 
-@app.post("/layout_extraction", response_model=LayoutResponse)  # type: ignore
+@app.post("/layout-extraction", response_model=LayoutResponse)  # type: ignore
 async def layout_extraction(document: UploadFile):
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         tmp.write(await document.read())
-        tmp_path = Path(tmp.name)
+        tmp_path = tmp.name
 
-    command = ["python", "src/cli.py", "--document", str(tmp_path), "--extract_layout"]
-    output = run_cli_command(command)
+    command = [".\\venv\\Scripts\\python.exe", "-m", "src.cli", "--document", tmp_path, "--extract_layout"]
 
-    with open(tmp_path.with_suffix(".json"), "w") as f:
+    try:
+        output = run_cli_command(command).splitlines()[-1]
+    except HTTPException as e:
+        # Handle the error and return a response
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+    with open(Path(tmp_path).with_suffix(".json"), "w") as f:
         f.write(output)
 
     return LayoutResponse(layout=output, document_id=tmp_path)
@@ -57,7 +65,7 @@ async def layout_extraction(document: UploadFile):
 # TODO: Make specific prompts for each type of extraction
 
 
-@app.post("/graphics_extraction", response_model=ExtractionResponse)  # type: ignore
+@app.post("/graphics-extraction", response_model=ExtractionResponse)  # type: ignore
 async def graphics_extraction(layout_block_id: int, document_id: str, output_type: str):
     document_path = Path(document_id)
     with open(document_path.with_suffix(".json")) as f:
@@ -80,7 +88,7 @@ async def graphics_extraction(layout_block_id: int, document_id: str, output_typ
     return ExtractionResponse(status="success", text=output)
 
 
-@app.post("/information_extraction", response_model=InformationResponse)  # type: ignore
+@app.post("/information-extraction", response_model=InformationResponse)  # type: ignore
 async def information_extraction(prompt: str, document_id: str):
     command = ["python", "src/cli.py", "--document", document_id, "--prompt", prompt]
     output = run_cli_command(command)
