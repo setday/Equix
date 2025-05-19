@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pickle
-
 import json
 import subprocess
 import tempfile
@@ -48,13 +46,16 @@ async def layout_extraction(document: UploadFile):
         tmp.write(await document.read())
         tmp_path = tmp.name
 
-    command = [".\\venv\\Scripts\\python.exe", "-m", "src.cli", "--document", tmp_path, "--extract_layout"]
+    command = [
+        ".\\venv\\Scripts\\python.exe",
+        "-m",
+        "src.cli",
+        "--document",
+        tmp_path,
+        "--extract_layout",
+    ]
 
-    try:
-        output = run_cli_command(command).splitlines()[-1]
-    except HTTPException as e:
-        # Handle the error and return a response
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    output = run_cli_command(command).splitlines()[-1]
 
     with open(Path(tmp_path).with_suffix(".json"), "w") as f:
         f.write(output)

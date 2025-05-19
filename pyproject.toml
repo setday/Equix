@@ -16,8 +16,8 @@ exclude = '''
 
 [tool.ruff]
 line-length = 88
-select = ["E", "F", "W", "C", "N", "B", "A"]
-ignore = [
+lint.select = ["E", "F", "W", "C", "N", "B", "A"]
+lint.ignore = [
     "E501",  # Line too long (handled by Black)
     "F401",  # Unused imports
 ]

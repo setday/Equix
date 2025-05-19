@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
-from dataclasses import dataclass
 
 from PIL import Image
 
@@ -102,7 +102,41 @@ class LayoutBlockBoundingBox:
 
         if self.width <= 0 or self.height <= 0:
             raise ValueError("Width and height must be positive values.")
-        
+
+    @staticmethod
+    def from_points(
+        x0: float,
+        y0: float,
+        x1: float,
+        y1: float,
+    ) -> LayoutBlockBoundingBox:
+        """
+        Create a LayoutBlockBoundingBox from points.
+
+        :param x0: The x-coordinate of the top-left corner of the bounding box.
+        :param y0: The y-coordinate of the top-left corner of the bounding box.
+        :param x1: The x-coordinate of the bottom-right corner of the bounding box.
+        :param y1: The y-coordinate of the bottom-right corner of the bounding box.
+        :return: The layout block bounding box.
+        """
+
+        return LayoutBlockBoundingBox(
+            x=x0,
+            y=y0,
+            width=x1 - x0,
+            height=y1 - y0,
+        )
+
+    def to_points(self) -> tuple[float, float, float, float]:
+        """
+        Convert the layout block bounding box to points.
+
+        :return: The points of the bounding box.
+        """
+
+        return self.x, self.y, self.x + self.width, self.y + self.height
+
+    @staticmethod
     def from_dict(
         bounding_box_data: dict[str, float],
     ) -> LayoutBlockBoundingBox:
@@ -119,7 +153,7 @@ class LayoutBlockBoundingBox:
             width=bounding_box_data["width"],
             height=bounding_box_data["height"],
         )
-    
+
     def to_dict(self) -> dict[str, float]:
         """
         Convert the layout block bounding box to a dictionary.
@@ -133,7 +167,7 @@ class LayoutBlockBoundingBox:
             "width": self.width,
             "height": self.height,
         }
-    
+
     def __iter__(self) -> tuple[float, float, float, float]:
         """
         Iterate over the bounding box coordinates.
@@ -142,13 +176,13 @@ class LayoutBlockBoundingBox:
         """
 
         return self.x, self.y, self.x + self.width, self.y + self.height
-    
+
     def __repr__(self) -> str:
         return f"(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
-    
+
     def __str__(self) -> str:
         return f"(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
-    
+
 
 @dataclass
 class LayoutBlock:
@@ -217,10 +251,14 @@ class LayoutBlock:
             anotation=block_data.get("anotation", None),
             confidence=block_data.get("confidence", 1.0),
             metadata=block_data.get("metadata", None),
-            children=[
-                LayoutBlock.from_dict(child_data)
-                for child_data in block_data["children"]
-            ] if "children" in block_data else None,
+            children=(
+                [
+                    LayoutBlock.from_dict(child_data)
+                    for child_data in block_data["children"]
+                ]
+                if "children" in block_data
+                else None
+            ),
         )
 
     def extract_image_block(self, pages: list[Image.Image]) -> Image.Image:
@@ -231,7 +269,7 @@ class LayoutBlock:
         :return: The image block.
         """
 
-        x0, y0, x1, y1 = self.bounding_box
+        x0, y0, x1, y1 = self.bounding_box.to_points()
         page = pages[self.page_number]
         image_block = page.crop((x0, y0, x1, y1))
 
@@ -270,17 +308,19 @@ class LayoutBlock:
             "anotation": self.anotation,
             "confidence": self.confidence,
             "metadata": self.metadata,
-            "children": [
-                child.to_dict() for child in self.children
-            ] if self.children else None,
+            "children": (
+                [child.to_dict() for child in self.children] if self.children else None
+            ),
         }
-    
+
     def with_fields(
         self,
-        id: int | None = None,
+        block_id: int | None = None,
         block_type: LayoutBlockType | None = None,
         block_specification: LayoutBlockSpecification | None = None,
-        bounding_box: tuple[float, float, float, float] | None = None,
+        bounding_box: (
+            tuple[float, float, float, float] | LayoutBlockBoundingBox | None
+        ) = None,
         page_number: int | None = None,
         text_content: str | None = None,
         byte_content: bytes | None = None,
@@ -293,8 +333,11 @@ class LayoutBlock:
         Create a new LayoutBlock with updated fields.
         """
 
+        if isinstance(bounding_box, tuple):
+            bounding_box = LayoutBlockBoundingBox.from_points(*bounding_box)
+
         return LayoutBlock(
-            id or self.id,
+            block_id or self.id,
             block_type or self.type,
             block_specification or self.specification,
             bounding_box or self.bounding_box,
@@ -340,12 +383,9 @@ class Layout:
         """
 
         return Layout(
-            [
-                LayoutBlock.from_dict(block_data)
-                for block_data in layout_data["blocks"]
-            ],
-            layout_data.get("page_count", 0),
-            layout_data.get("metadata", None),
+            [LayoutBlock.from_dict(block_data) for block_data in layout_data["blocks"]],
+            layout_data.get("page_count", 0),  # type: ignore
+            layout_data.get("metadata", None),  # type: ignore
         )
 
     def to_text(self) -> str:
@@ -367,9 +407,10 @@ class Layout:
 
         return {
             "blocks": [
-                block.with_fields(id=index).to_dict()
+                block.with_fields(block_id=index).to_dict()
                 for index, block in enumerate(self.blocks)
-                if not graphics_only or (
+                if not graphics_only
+                or (
                     block.type == LayoutBlockType.PICTURE
                     or block.type == LayoutBlockType.TABLE
                     or block.type == LayoutBlockType.CHART

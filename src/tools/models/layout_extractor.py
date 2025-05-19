@@ -36,7 +36,10 @@ class LayoutExtractor:
         )
 
         self.model = DetrForSegmentation.from_pretrained(model_path).eval()
-        self.processor = AutoImageProcessor.from_pretrained(processor_path, use_fast=True)
+        self.processor = AutoImageProcessor.from_pretrained(
+            processor_path,
+            use_fast=True,
+        )
 
         self.detection_threshold = 0.5
 
