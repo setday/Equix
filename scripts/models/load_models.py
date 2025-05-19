@@ -133,7 +133,7 @@ def load_huggingface_detr(model_name: str, output_dir: Path) -> None:
     (output_dir / "model").mkdir(parents=True, exist_ok=True)
 
     # Load processor
-    processor = AutoImageProcessor.from_pretrained(model_name)
+    processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
     processor.save_pretrained(output_dir / "processor")
 
     # Load model

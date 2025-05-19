@@ -5,12 +5,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 ### Set the working directory
 WORKDIR /app
 
-### Copy Service files
-COPY services/markup/serve_web_tunnel.py /app/app.py
-
 ### Install GCC for poppler
 RUN apt-get update && \
-    apt-get install -y g++
+    apt-get install -y poppler-utils
 
 ### Install dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -23,8 +20,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
         transformers==4.48.0 \
         uvicorn==0.34.2 \
         python-multipart==0.0.20 \
-        timm==1.0.15 \
-        python-poppler==0.4.1
+        timm==1.0.15
+
+### Copy Service files
+COPY services/markup/serve_web_tunnel.py /app/app.py
 
 ### Expose the port
 EXPOSE 5123

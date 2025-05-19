@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-import json
+import pickle
 import tempfile
 from pathlib import Path
-from typing import Any
+import time
 
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.base.layout import Layout
@@ -15,12 +16,27 @@ from src.tools.models.layout_extractor import global_layout_extractor
 from src.tools.pdf_reader import PDFReader
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Equix Layout Extraction API",
+    description="API for extracting layout from PDF documents.",
+    version="1.0.0",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:1420",
+        "*"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class LayoutResponse(BaseModel):
     layout: Layout
     document_id: str
+    processing_time: float
 
     class Config:
         arbitrary_types_allowed = True
@@ -32,18 +48,21 @@ class LayoutResponse(BaseModel):
                 "layout": {
                     "blocks": [
                         {
+                            "type": "text",
+                            "specification": "unknown",
+                            "bounding_box": [0, 0, 0.1, 0.1],
                             "page_number": 0,
-                            "text": "Sample text",
-                            "bounding_box": {
-                                "x1": 0,
-                                "y1": 0,
-                                "x2": 100,
-                                "y2": 100,
-                            },
+                            "text_content": "Sample text",
+                            "byte_content": None,
+                            "anotation": None,
+                            "confidence": 0.9,
+                            "metadata": None,
+                            "children": None,
                         }
                     ],
                 },
                 "document_id": "sample_document_id",
+                "processing_time": 100.0,
             }
         }
         
@@ -54,26 +73,43 @@ async def layout_extraction(document: UploadFile):
         tmp.write(await document.read())
         tmp_path = tmp.name
 
+    processing_time_start = time.time()
+
     try:
         pdf_reader = PDFReader(Path(tmp_path))
+
+        def enhance_box(box: dict[str, any], page_number: int, page_dimensions: tuple[int, int]) -> dict[str, any]:
+            box.update({
+                "page_number": page_number,
+                "bounding_box": {
+                    "x": box["bounding_box"]["x"] / page_dimensions[0],
+                    "y": box["bounding_box"]["y"] / page_dimensions[1],
+                    "width": box["bounding_box"]["width"] / page_dimensions[0],
+                    "height": box["bounding_box"]["height"] / page_dimensions[1],
+                },
+            })
+            return box
 
         layout = Layout.from_dict(
             {
                 "blocks": [
-                    box.update({"page_number": page_number}) or box
+                    enhance_box(box, page_number, image.size)
                     for page_number, image in enumerate(pdf_reader.images)
                     for box in global_layout_extractor.make_layout(image)
                 ],
+                "page_count": len(pdf_reader.images),
             },
         )
     except HTTPException as e:
         # Handle the error and return a response
         raise HTTPException(status_code=e.status_code, detail=e.detail)
     
-    with open(Path(tmp_path).with_suffix(".json"), "w") as f:
-        json.dump(layout, f)
+    processing_time_end = time.time()
+    
+    with open(Path(tmp_path).with_suffix(".json"), "wb") as f:
+        pickle.dump(layout, f)
 
-    return LayoutResponse(layout=layout, document_id=tmp_path)
+    return LayoutResponse(layout=layout, document_id=tmp_path, processing_time=processing_time_end - processing_time_start)
 
 
 @app.get("/health")

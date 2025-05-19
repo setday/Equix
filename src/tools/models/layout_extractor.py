@@ -36,7 +36,7 @@ class LayoutExtractor:
         )
 
         self.model = DetrForSegmentation.from_pretrained(model_path).eval()
-        self.processor = AutoImageProcessor.from_pretrained(processor_path)
+        self.processor = AutoImageProcessor.from_pretrained(processor_path, use_fast=True)
 
         self.detection_threshold = 0.5
 
@@ -70,10 +70,18 @@ class LayoutExtractor:
             if score < self.detection_threshold:
                 continue
 
+            bbox = box.tolist()
+
             result.append(
                 {
-                    "block_type": label.item(),
-                    "bbox": box.tolist(),
+                    "type": label.item(),
+                    "bounding_box": {
+                        "x": bbox[0],
+                        "y": bbox[1],
+                        "width": bbox[2] - bbox[0],
+                        "height": bbox[3] - bbox[1],
+                    },
+                    "confidence": score.item(),
                 },
             )
 

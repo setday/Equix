@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any
+from dataclasses import dataclass
 
 from PIL import Image
 
@@ -78,50 +79,111 @@ def block_string_to_enum(
             return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.UNKNOWN
 
 
+@dataclass
+class LayoutBlockBoundingBox:
+    """
+    A layout block bounding box class that represents the bounding box of a block.
+
+    :param x: The x-coordinate of the top-left corner of the bounding box.
+    :param y: The y-coordinate of the top-left corner of the bounding box.
+    :param width: The width of the bounding box.
+    :param height: The height of the bounding box.
+    """
+
+    x: float
+    y: float
+    width: float
+    height: float
+
+    def __post_init__(self) -> None:
+        """
+        Post-initialization method to ensure the bounding box is valid.
+        """
+
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("Width and height must be positive values.")
+        
+    def from_dict(
+        bounding_box_data: dict[str, float],
+    ) -> LayoutBlockBoundingBox:
+        """
+        Create a LayoutBlockBoundingBox from a dictionary.
+
+        :param bounding_box_data: The data of the bounding box.
+        :return: The layout block bounding box.
+        """
+
+        return LayoutBlockBoundingBox(
+            x=bounding_box_data["x"],
+            y=bounding_box_data["y"],
+            width=bounding_box_data["width"],
+            height=bounding_box_data["height"],
+        )
+    
+    def to_dict(self) -> dict[str, float]:
+        """
+        Convert the layout block bounding box to a dictionary.
+
+        :return: The dictionary representation of the layout block bounding box.
+        """
+
+        return {
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height,
+        }
+    
+    def __iter__(self) -> tuple[float, float, float, float]:
+        """
+        Iterate over the bounding box coordinates.
+
+        :return: The coordinates of the bounding box.
+        """
+
+        return self.x, self.y, self.x + self.width, self.y + self.height
+    
+    def __repr__(self) -> str:
+        return f"(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+    
+    def __str__(self) -> str:
+        return f"(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
+    
+
+@dataclass
 class LayoutBlock:
-    block_type: LayoutBlockType
-    block_specification: LayoutBlockSpecification
+    """
+    A layout block class that represents a block in a document layout.
 
-    text_content: str | None
-    byte_content: bytes | None
+    :param id: The ID of the block.
+    :param type: The type of the block.
+    :param specification: The specification of the block.
+    :param bounding_box: The bounding box of the block.
+    :param page_number: The page number of the block.
+    :param text_content: The text content (for text blocks or extracted text from images, tables, etc.).
+    :param byte_content: The byte content (for images, tables, etc.).
+    :param anotation: The anotation of the block (for images, tables, etc.).
+    :param confidence: The confidence of the block.
+    :param metadata: The metadata of the block.
+    :param children: The children of the block (for nested blocks).
+    """
 
-    anotation: str | None
+    id: int
 
-    bbox: tuple[float, float, float, float]
+    type: LayoutBlockType
+    specification: LayoutBlockSpecification
+
+    bounding_box: LayoutBlockBoundingBox
     page_number: int
 
-    def __init__(
-        self,
-        block_type: LayoutBlockType,
-        block_specification: LayoutBlockSpecification,
-        bbox: tuple[float, float, float, float],
-        page_number: int,
-        text_content: str | None = None,
-        byte_content: bytes | None = None,
-        anotation: str | None = None,
-    ):
-        """
-        A layout block class that represents a block in a document layout.
+    text_content: str | None = None
+    byte_content: bytes | None = None
 
-        :param block_type: The type of the block.
-        :param block_specification: The specification of the block.
-        :param bbox: The bounding box of the block.
-        :param page_number: The page number of the block.
-        :param text_content: The text content (for text blocks or extracted text from images, tables, etc.).
-        :param byte_content: The byte content (for images, tables, etc.).
-        :param anotation: The anotation of the block (for images, tables, etc.).
-        """
+    anotation: str | None = None
 
-        self.block_type = block_type
-        self.block_specification = block_specification
-
-        self.bbox = bbox
-        self.page_number = page_number
-
-        self.text_content = text_content
-        self.byte_content = byte_content
-
-        self.anotation = anotation
+    confidence: float = 1.0
+    metadata: dict[str, Any] | None = None
+    children: list[LayoutBlock] | None = None
 
     @staticmethod
     def from_dict(
@@ -134,24 +196,31 @@ class LayoutBlock:
         :return: The layout block.
         """
 
-        btype = block_data.get("block_type", None)
+        btype = block_data.get("type", None)
 
         if isinstance(btype, str):
-            block_type, block_specification = block_string_to_enum(btype)
+            block_type, specification = block_string_to_enum(btype)
         else:
-            block_type = LayoutBlockType(block_data["block_type"])
-            block_specification = LayoutBlockSpecification(
-                block_data.get("block_specification", 0),
+            block_type = LayoutBlockType(block_data["type"])
+            specification = LayoutBlockSpecification(
+                block_data.get("specification", 0),
             )
 
         return LayoutBlock(
-            block_type=block_type,
-            block_specification=block_specification,
-            bbox=block_data.get("bbox", None),
+            id=block_data.get("id", -1),
+            type=block_type,
+            specification=specification,
+            bounding_box=LayoutBlockBoundingBox.from_dict(block_data["bounding_box"]),
             page_number=block_data.get("page_number", None),
             text_content=block_data.get("text_content", None),
             byte_content=block_data.get("byte_content", None),
             anotation=block_data.get("anotation", None),
+            confidence=block_data.get("confidence", 1.0),
+            metadata=block_data.get("metadata", None),
+            children=[
+                LayoutBlock.from_dict(child_data)
+                for child_data in block_data["children"]
+            ] if "children" in block_data else None,
         )
 
     def extract_image_block(self, pages: list[Image.Image]) -> Image.Image:
@@ -162,7 +231,7 @@ class LayoutBlock:
         :return: The image block.
         """
 
-        x0, y0, x1, y1 = self.bbox
+        x0, y0, x1, y1 = self.bounding_box
         page = pages[self.page_number]
         image_block = page.crop((x0, y0, x1, y1))
 
@@ -181,7 +250,7 @@ class LayoutBlock:
         if self.anotation:
             return self.anotation
 
-        return f"LayoutBlock(block_type={self.block_type}, block_specification={self.block_specification})"
+        return f"LayoutBlock(type={self.type}, specification={self.specification})"
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -191,14 +260,52 @@ class LayoutBlock:
         """
 
         return {
-            "block_type": self.block_type.name,
-            "block_specification": self.block_specification.name,
-            "bbox": self.bbox,
+            "id": self.id,
+            "block_type": self.type.name,
+            "block_specification": self.specification.name,
+            "bounding_box": self.bounding_box.to_dict(),
             "page_number": self.page_number,
             "text_content": self.text_content,
             "byte_content": self.byte_content,
             "anotation": self.anotation,
+            "confidence": self.confidence,
+            "metadata": self.metadata,
+            "children": [
+                child.to_dict() for child in self.children
+            ] if self.children else None,
         }
+    
+    def with_fields(
+        self,
+        id: int | None = None,
+        block_type: LayoutBlockType | None = None,
+        block_specification: LayoutBlockSpecification | None = None,
+        bounding_box: tuple[float, float, float, float] | None = None,
+        page_number: int | None = None,
+        text_content: str | None = None,
+        byte_content: bytes | None = None,
+        anotation: str | None = None,
+        confidence: float | None = None,
+        metadata: dict[str, Any] | None = None,
+        children: list[LayoutBlock] | None = None,
+    ) -> LayoutBlock:
+        """
+        Create a new LayoutBlock with updated fields.
+        """
+
+        return LayoutBlock(
+            id or self.id,
+            block_type or self.type,
+            block_specification or self.specification,
+            bounding_box or self.bounding_box,
+            page_number or self.page_number,
+            text_content or self.text_content,
+            byte_content or self.byte_content,
+            anotation or self.anotation,
+            confidence or self.confidence,
+            metadata or self.metadata,
+            children or self.children,
+        )
 
     def __repr__(self) -> str:
         return self.to_text()
@@ -207,20 +314,19 @@ class LayoutBlock:
         return self.to_text()
 
 
+@dataclass
 class Layout:
+    """
+    A layout class that represents a layout of a document.
+
+    :param blocks: The blocks in the layout.
+    :param page_count: The number of pages in the layout.
+    :param metadata: The metadata of the layout.
+    """
+
     blocks: list[LayoutBlock]
-
-    def __init__(
-        self,
-        blocks: list[LayoutBlock],
-    ):
-        """
-        A layout class that represents a layout of a document.
-
-        :param blocks: The blocks in the layout.
-        """
-
-        self.blocks = blocks
+    page_count: int = 0
+    metadata: dict[str, Any] | None = None
 
     @staticmethod
     def from_dict(
@@ -234,10 +340,12 @@ class Layout:
         """
 
         return Layout(
-            blocks=[
+            [
                 LayoutBlock.from_dict(block_data)
                 for block_data in layout_data["blocks"]
             ],
+            layout_data.get("page_count", 0),
+            layout_data.get("metadata", None),
         )
 
     def to_text(self) -> str:
@@ -259,15 +367,16 @@ class Layout:
 
         return {
             "blocks": [
-                block.to_dict()  # .update({"index": index})
+                block.with_fields(id=index).to_dict()
                 for index, block in enumerate(self.blocks)
-                if not graphics_only
-                or (
-                    block.block_type == LayoutBlockType.PICTURE
-                    or block.block_type == LayoutBlockType.TABLE
-                    or block.block_type == LayoutBlockType.CHART
+                if not graphics_only or (
+                    block.type == LayoutBlockType.PICTURE
+                    or block.type == LayoutBlockType.TABLE
+                    or block.type == LayoutBlockType.CHART
                 )
             ],
+            "page_count": self.page_count,
+            "metadata": self.metadata,
         }
 
     def __len__(self) -> int:

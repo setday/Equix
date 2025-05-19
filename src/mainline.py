@@ -108,6 +108,7 @@ class ChatChainModel:
                     for page_number, image in enumerate(self.images)
                     for box in global_layout_extractor.make_layout(image)
                 ],
+                "page_count": len(self.images),
             },
         )
         return layout
