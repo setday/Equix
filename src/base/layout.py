@@ -12,25 +12,27 @@ class LayoutBlockType(Enum):
     An enumeration class that represents the type of a layout block.
     """
 
-    UNKNOWN = 0
+    UNKNOWN = -1
 
-    CAPTION = 1
-    FOOTNOTE = 2
-    FORMULA = 3
+    CAPTION = 0
+    FOOTNOTE = 1
+    FORMULA = 2
 
-    LIST_ITEM = 4
+    LIST_ITEM = 3
 
-    PAGE_FOOTER = 5
-    PAGE_HEADER = 6
+    PAGE_FOOTER = 4
+    PAGE_HEADER = 5
 
-    PICTURE = 7
+    PICTURE = 6
 
-    SECTION_HEADER = 8
+    SECTION_HEADER = 7
 
-    TABLE = 9
-    TEXT = 10
+    TABLE = 8
+    TEXT = 9
 
-    CHART = 100
+    TITLE = 10
+
+    CHART = 11
 
 
 class LayoutBlockSpecification(Enum):
@@ -38,12 +40,12 @@ class LayoutBlockSpecification(Enum):
     An enumeration class that represents the specification of a layout block.
     """
 
-    UNKNOWN = 0
-    HEADER = 1
-    FOOTER = 2
-    ANNOTATION = 3
-    CAPTION = 4
-    PAGE_NUMBER = 5
+    UNKNOWN = -1
+    HEADER = 0
+    FOOTER = 1
+    ANNOTATION = 2
+    CAPTION = 3
+    PAGE_NUMBER = 4
 
 
 def block_string_to_enum(
@@ -55,28 +57,56 @@ def block_string_to_enum(
     :param block_string: The block string.
     :return: The block enum.
     """
+    # Define mappings to reduce complexity
+    block_type_mappings = {
+        "Table": LayoutBlockType.TABLE,
+        "TABLE": LayoutBlockType.TABLE,
+        "Picture": LayoutBlockType.PICTURE,
+        "Image": LayoutBlockType.PICTURE,
+        "PICTURE": LayoutBlockType.PICTURE,
+        "Text": LayoutBlockType.TEXT,
+        "TEXT": LayoutBlockType.TEXT,
+        "Chart": LayoutBlockType.CHART,
+        "CHART": LayoutBlockType.CHART,
+        "List Item": LayoutBlockType.LIST_ITEM,
+        "LIST_ITEM": LayoutBlockType.LIST_ITEM,
+        "Formula": LayoutBlockType.FORMULA,
+        "FORMULA": LayoutBlockType.FORMULA,
+        "Footnote": LayoutBlockType.FOOTNOTE,
+        "FOOTNOTE": LayoutBlockType.FOOTNOTE,
+        "Section Header": LayoutBlockType.SECTION_HEADER,
+        "SECTION_HEADER": LayoutBlockType.SECTION_HEADER,
+        "Page Footer": LayoutBlockType.PAGE_FOOTER,
+        "PAGE_FOOTER": LayoutBlockType.PAGE_FOOTER,
+        "Page Header": LayoutBlockType.PAGE_HEADER,
+        "PAGE_HEADER": LayoutBlockType.PAGE_HEADER,
+        "Caption": LayoutBlockType.CAPTION,
+        "CAPTION": LayoutBlockType.CAPTION,
+    }
 
-    match block_string:
-        case "Table":
-            return LayoutBlockType.TABLE, LayoutBlockSpecification.UNKNOWN
-        case "Picture":
-            return LayoutBlockType.PICTURE, LayoutBlockSpecification.UNKNOWN
-        case "Text":
-            return LayoutBlockType.TEXT, LayoutBlockSpecification.UNKNOWN
-        case "Chart":
-            return LayoutBlockType.CHART, LayoutBlockSpecification.UNKNOWN
-        case "Header":
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.HEADER
-        case "Footer":
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.FOOTER
-        case "Annotation":
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.ANNOTATION
-        case "Caption":
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.CAPTION
-        case "Page Number":
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.PAGE_NUMBER
-        case _:
-            return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.UNKNOWN
+    specification_mappings = {
+        "Header": LayoutBlockSpecification.HEADER,
+        "HEADER": LayoutBlockSpecification.HEADER,
+        "Footer": LayoutBlockSpecification.FOOTER,
+        "FOOTER": LayoutBlockSpecification.FOOTER,
+        "Annotation": LayoutBlockSpecification.ANNOTATION,
+        "ANNOTATION": LayoutBlockSpecification.ANNOTATION,
+        "Caption": LayoutBlockSpecification.CAPTION,
+        "CAPTION": LayoutBlockSpecification.CAPTION,
+        "Page Number": LayoutBlockSpecification.PAGE_NUMBER,
+        "PAGE_NUMBER": LayoutBlockSpecification.PAGE_NUMBER,
+    }
+
+    # Check block type mappings first
+    if block_string in block_type_mappings:
+        return block_type_mappings[block_string], LayoutBlockSpecification.UNKNOWN
+
+    # Check specification mappings
+    if block_string in specification_mappings:
+        return LayoutBlockType.UNKNOWN, specification_mappings[block_string]
+
+    # Default case
+    return LayoutBlockType.UNKNOWN, LayoutBlockSpecification.UNKNOWN
 
 
 @dataclass
@@ -230,7 +260,7 @@ class LayoutBlock:
         :return: The layout block.
         """
 
-        btype = block_data.get("type", None)
+        btype = block_data.get("type", "UNKNOWN")
 
         if isinstance(btype, str):
             block_type, specification = block_string_to_enum(btype)
@@ -256,7 +286,7 @@ class LayoutBlock:
                     LayoutBlock.from_dict(child_data)
                     for child_data in block_data["children"]
                 ]
-                if "children" in block_data
+                if "children" in block_data and block_data["children"] is not None
                 else None
             ),
         )

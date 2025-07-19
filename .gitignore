@@ -169,5 +169,6 @@ cython_debug/
 
 data/*
 models/*
+cache/*
 
 !example

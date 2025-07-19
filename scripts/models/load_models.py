@@ -76,7 +76,7 @@ def load_huggingface_vision_model(model_name: str, output_dir: Path) -> None:
     processor.save_pretrained(output_dir / "processor")
 
     # Load model
-    model = AutoModelForImageTextToText.from_pretrained(model_name)
+    model = AutoModelForImageTextToText.from_pretrained(model_name, cache_dir="./cache")
     model.save_pretrained(output_dir / "model")
 
 
