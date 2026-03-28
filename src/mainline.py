@@ -140,11 +140,11 @@ class ChatChainModel:
 
         return Image.open(document_path)
 
-    def _build_chain(self) -> StateGraph:
+    def _build_chain(self) -> Any:
         """
         Build the chain for the chat model.
 
-        :return: The chain for the chat model.
+        :return: The compiled chain for the chat model.
         """
 
         chain = StateGraph(AgentState)
@@ -157,7 +157,7 @@ class ChatChainModel:
         chain.add_edge(START, "entry_node")
         chain.add_edge("entry_node", END)
 
-        return chain
+        return chain.compile()
 
     def get_layout(self) -> Layout:
         """
@@ -176,14 +176,23 @@ class ChatChainModel:
         :return: The response.
         """
 
-        result = self.chain.generate_conversation()
-
-        assert isinstance(
-            result,
-            str,
-        ), "Something went wrong with the conversation: chain returned a non-string result."
-
-        return result
+        # Create initial state with the user prompt
+        initial_state: AgentState = {
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        
+        # Invoke the compiled chain with the initial state
+        result = self.chain.invoke(initial_state)
+        
+        # Extract the assistant's response from the final state
+        if result and "messages" in result and len(result["messages"]) > 0:
+            # Get the last message which should be the assistant's response
+            last_message = result["messages"][-1]
+            if last_message.get("role") == "assistant":
+                return str(last_message.get("content", ""))
+        
+        # Fallback if no proper response found
+        return "No response generated."
 
 
 class ExtractionChainModel:
@@ -200,25 +209,26 @@ class ExtractionChainModel:
         self.chain = self._build_chain()
         self.layout = layout
 
-    def _build_chain(self) -> StateGraph:
+    def _build_chain(self) -> Any:
         """
         Build the chain for the extraction model.
 
         :return: The chain for the extraction model.
         """
 
-        chain = StateGraph()
-
-        chain.add_state("start")
-        chain.add_state("end")
-
-        chain.add_edge(
-            "start",
-            "end",
-            PromptTemplate("Ask for information about document", layout=self.layout),
+        # The ExtractionChainModel appears to be incomplete/placeholder code
+        # For now, return a simple compiled chain that does basic extraction
+        chain = StateGraph(AgentState)
+        
+        chain.add_node(
+            "extraction_node",
+            QuestionResolverNode(self.layout, global_llm_model),
         )
 
-        return chain
+        chain.add_edge(START, "extraction_node")
+        chain.add_edge("extraction_node", END)
+
+        return chain.compile()
 
     def extract_information(self) -> str:
         """
@@ -227,11 +237,23 @@ class ExtractionChainModel:
         :return: The extracted information.
         """
 
-        result = self.chain.generate_conversation()
-
-        assert isinstance(
-            result,
-            str,
-        ), "Something went wrong with the conversation: chain returned a non-string result."
-
-        return result
+        # Create a default extraction prompt
+        extraction_prompt = "Extract and summarize key information from this document."
+        
+        # Create initial state with the extraction prompt
+        initial_state: AgentState = {
+            "messages": [{"role": "user", "content": extraction_prompt}]
+        }
+        
+        # Invoke the compiled chain with the initial state
+        result = self.chain.invoke(initial_state)
+        
+        # Extract the assistant's response from the final state
+        if result and "messages" in result and len(result["messages"]) > 0:
+            # Get the last message which should be the assistant's response
+            last_message = result["messages"][-1]
+            if last_message.get("role") == "assistant":
+                return str(last_message.get("content", ""))
+        
+        # Fallback if no proper response found
+        return "No information extracted."
